@@ -7,4 +7,4 @@ import discordBot from './discord'
 const bot = new discordBot()
 
 // start the bot
-bot.init()// error: Cannot find module './discord' or its corresponding type declarations.ts(2307)
+bot.init()
