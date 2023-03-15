@@ -3,6 +3,7 @@ import {
     GatewayIntentBits,
     Partials,
     Events,
+    DMChannel
 } from 'discord.js'
 import { getCompletion } from './openAI';
 
@@ -36,16 +37,22 @@ export default class DisordBot {
 
     // listen to all messages
     async handleMessage(message) {
-        // ignore bot messages
-        if (message.author.bot) return;
+        const isDM = (message.channel instanceof DMChannel)
+        // ignore bot messages and messages without content
+        if (message.author.bot || !message.content) return;
 
-        if (message.content === 'ping') {
-            return message.reply('Pong!');
+        // only respond to messages that @mention the bot user or direct messages to the bot
+        if (!message.mentions.has(this.client.user) && !isDM) return;
+
+        // remove the @mention from the message content
+        if (!isDM) {
+            message.content = message.content.replace(`<@!${this.client.user?.id}>`, '').trim();
         }
 
+        // get the bot's response
         const response = await getCompletion(message.content)
-        let reply = response?.data.choices[0].message?.content.trim()
 
-        await message.reply(reply);
+        await message.reply(response);
+     
     }
 }
