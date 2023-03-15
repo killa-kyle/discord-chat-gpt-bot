@@ -58,9 +58,10 @@ function cosineSimilarity(vecA, vecB) {
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function clearJsonFile(filename) {
+async function clearJsonFile(filename) {
     let emptyData = JSON.stringify([]);
-    fs.writeFileSync(filename, emptyData);
+    await fs.writeFileSync(filename, emptyData);
+    return console.log("File cleared successfully");
 }
 
 function getSimilarTextFromDb(inputEmbedding, dbName = "db") {
