@@ -31,16 +31,15 @@ export const getCompletion = async function (prompt, systemPromptText = '') {
         const formatted_date = `${month}-${day}-${year}`
 
         // add a system prompt to the prompt
-        let systemPrompt = { role: "system", content: `You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff Current date: ${formatted_date}` }
+        let systemPrompt = { role: "system", content: `You are MyBot, a large language model trained by OpenAI. Answer as concisely as possible. Your responses are neatly organized, always taking advantage of Markdown syntax, lists, formatting, and images to improve readability and cohesion. Always use new lines in between your paragraphs to make it easier to read. When asked to do tasks, you first think step by step, and break the problem down into parts to reach the most accurate answer documenting along the way. Knowledge cutoff Current date: ${formatted_date}` }
 
         // allow the system prompt to be overridden
-        if(systemPromptText){
+        if (systemPromptText) {
             systemPrompt = { role: "system", content: systemPromptText }
-        } 
+        }
 
         // combine the system prompt with the user prompt in an array
         const combinedPrompt = [systemPrompt, ...prompt]
-
 
         // format the prompt
         const completion = await openai.createChatCompletion({
@@ -67,4 +66,35 @@ export const getCompletion = async function (prompt, systemPromptText = '') {
         }
         return error
     }
+}
+
+export const getEmbedding = async (text) => {
+    if (!text) return
+    if (!OPENAI_API_KEY) {
+        console.error("OpenAI API key not configured, please follow instructions in README.md")
+        return
+    }
+    try {
+        // each input must not exceed 8192 tokens in length.
+        const response = await openai.createEmbedding({
+            model: 'text-embedding-ada-002',
+            input: text,
+        })
+
+        const responseData = response.data.data[0].embedding
+
+        return responseData
+    } catch (error) {
+        return error
+    }
+}
+
+export const getAiImage = async (prompt) => {
+    const response = await openai.createImage({
+        prompt: prompt,
+        n: 1,
+        size: '512x512',
+    })
+    const responseImageUrl = response['data']['data'][0]['url']
+    return responseImageUrl
 }

@@ -53,14 +53,20 @@ export default class DisordBot {
         const userId = message.author.id as string;
 
         // clear the conversation if the user types !clear
-        if(message.content === '!clear'){
+        if (message.content === '!clear') {
             await clearConversation(userId);
             return message.reply('Conversation cleared ' + message.author.username + '!');
         }
-
-
+        
         // ask the assistant for a response
-        const response = await getBotCompletionResponse(message, userId);
+        let response = await getBotCompletionResponse(message, userId);
+
+        // handle long responses that exceed the discord message character limit
+        if (response?.length >= 1990) {
+            response = response.slice(0, 1990)
+            response = `${response}...`
+        }
+
 
         // send the response to the user
         await message.reply(response);
