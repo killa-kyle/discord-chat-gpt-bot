@@ -3,7 +3,9 @@ import {
     GatewayIntentBits,
     Partials,
     Events,
+    DMChannel
 } from 'discord.js'
+import { getCompletion } from './openAI';
 
 export default class DisordBot {
     client: Client;
@@ -24,16 +26,33 @@ export default class DisordBot {
             console.log(`Ready! Logged in as ${c.user.tag}`);
         });
     }
+
     init() {
 
         // init bot
         console.log('init discord bot')
         this.client.login(process.env.DISCORD_BOT_TOKEN);
     }
+
+
+    // listen to all messages
     async handleMessage(message) {
-       
-        if (message.content === 'ping') {
-            await message.reply('Pong!');
+        const isDM = (message.channel instanceof DMChannel)
+        // ignore bot messages and messages without content
+        if (message.author.bot || !message.content) return;
+
+        // only respond to messages that @mention the bot user or direct messages to the bot
+        if (!message.mentions.has(this.client.user) && !isDM) return;
+
+        // remove the @mention from the message content
+        if (!isDM) {
+            message.content = message.content.replace(`<@!${this.client.user?.id}>`, '').trim();
         }
+
+        // get the bot's response
+        const response = await getCompletion(message.content)
+
+        await message.reply(response);
+     
     }
 }
