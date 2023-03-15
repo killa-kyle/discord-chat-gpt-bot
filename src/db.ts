@@ -13,9 +13,9 @@ function createDb(dbName = "db") {
     try {
         if (!fs.existsSync(dbName + ".json")) {
             fs.writeFileSync(dbName + ".json", JSON.stringify([], null, 2));
-            return console.log(`${dbName + ".json"} file created successfully`);
+            // return console.log(`${dbName + ".json"} file created successfully`);
         } else {
-            return console.log(`${dbName + ".json"} file already exists`);
+            // return console.log(`${dbName + ".json"} file already exists`);
         }
     } catch (e) {
         return console.log(`Error creating ${dbName + ".json"} file:`, e);
@@ -34,7 +34,7 @@ function writeDb(obj, dbName = "db") {
         let data = readDb(dbName);
         data = obj;
         fs.writeFileSync(dbName + ".json", JSON.stringify(data, null, 2));
-        return console.log("Save succesful")
+        // return console.log("Save succesful")
     } catch (e) {
         return console.log("Save failed! with the following errror:", e)
     }
@@ -58,9 +58,10 @@ function cosineSimilarity(vecA, vecB) {
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function clearJsonFile(filename) {
+async function clearJsonFile(filename) {
     let emptyData = JSON.stringify([]);
-    fs.writeFileSync(filename, emptyData);
+    await fs.writeFileSync(filename, emptyData);
+    return console.log("File cleared successfully");
 }
 
 function getSimilarTextFromDb(inputEmbedding, dbName = "db") {

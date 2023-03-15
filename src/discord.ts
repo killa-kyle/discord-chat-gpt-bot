@@ -5,10 +5,9 @@ import {
     Events,
     DMChannel
 } from 'discord.js'
-import { getCompletion } from './openAI';
-import {readDb, writeDb, getSimilarTextFromDb, getCurrentDateTime, encodeToSHA256, cosineSimilarity, createDb, clearJsonFile} from './db';
-import crypto from 'crypto';
-const DB_FOLDER = "./conversations";
+
+import { getBotCompletionResponse, clearConversation } from './conversation';
+
 export default class DisordBot {
     client: Client;
     constructor() {
@@ -23,82 +22,55 @@ export default class DisordBot {
             partials: [Partials.Channel]
         });
         // handle message events
-        this.client.on('messageCreate', (message) => this.handleMessage(message));
+        this.client.on('messageCreate', (message) => this.handleMessage(message, this.client.user));
         this.client.once(Events.ClientReady, c => {
             console.log(`Ready! Logged in as ${c.user.tag}`);
         });
     }
 
     init() {
-
         // init bot
-        console.log('init discord bot')
+        console.log('init discord bot....')
         this.client.login(process.env.DISCORD_BOT_TOKEN);
     }
 
 
     // listen to all messages
-    async handleMessage(message) {
+    async handleMessage(message, discordBotuser) {
         const isDM = (message.channel instanceof DMChannel)
         // ignore bot messages and messages without content
         if (message.author.bot || !message.content) return;
 
         // only respond to messages that @mention the bot user or direct messages to the bot
-        if (!message.mentions.has(this.client.user) && !isDM) return;
+        if (!message.mentions.has(discordBotuser) && !isDM) return;
 
         // remove the @mention from the message content
         if (!isDM) {
-            message.content = message.content.replace(`<@${this.client.user?.id}>`, '').trim();
+            message.content = message.content.replace(`<@${discordBotuser?.id}>`, '').trim();
         }
 
         // cache the user's id so we can keep track of the bot's conversation with them
         const userId = message.author.id as string;
-        
-        // create a new conversation for the user if one doesn't exist
-        const USER_DB_PATH = `${DB_FOLDER}/${userId}`;
-        await createDb(USER_DB_PATH);
-        // read the conversation from the db
-        const conversation = readDb(USER_DB_PATH);
-        
-        // get the parent message id if one exists from the conversation
-        const parentMessageId = conversation[conversation?.length - 1]?.id || crypto.randomUUID();
-     
-        // add the user's message to the conversation
-        const userMessage = {
-            id: crypto.randomUUID(),
-            parentMessageId,
-            user: userId,
-            role: "user",
-            content: message.content,
-            embedding: [],
-            timestamp: getCurrentDateTime()
+
+        // clear the conversation if the user types !clear
+        if (message.content === '!clear') {
+            await clearConversation(userId);
+            return message.reply('Conversation cleared ' + message.author.username + '!');
         }
-        conversation.push(userMessage)
+        
+        // ask the assistant for a response
+        let response = await getBotCompletionResponse(message, userId);
 
-     
-        // write the conversation to the db
-        writeDb(conversation, USER_DB_PATH);
-       
-
-        // get the bot's response
-        const response = await getCompletion(message.content)
-        // add the bot's response to the conversation
-        const botMessage = {
-            id: crypto.randomUUID(),
-            parentMessageId: userMessage.id,
-            user: this.client.user?.id,
-            role: "assistant",
-            content: response,
-            embedding: [],
-            timestamp: getCurrentDateTime()
+        // handle long responses that exceed the discord message character limit
+        if (response?.length >= 1990) {
+            response = response.slice(0, 1990)
+            response = `${response}...`
         }
-        conversation.push(botMessage)
 
-        console.log({conversation})
-        // write the conversation to the db
-        writeDb(conversation, USER_DB_PATH);
-  
+
+        // send the response to the user
         await message.reply(response);
 
     }
+
 }
