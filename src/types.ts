@@ -1,4 +1,4 @@
 export type Conversation = {
-    role: string;
-    content: string;
+    role: string
+    content: string
 }
