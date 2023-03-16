@@ -73,14 +73,23 @@ export default class DisordBot {
         let response = await getBotCompletionResponse(message, userId)
 
         // handle long responses that exceed the discord message character limit
-        if (response?.length >= 1990) {
-            response = response.slice(0, 1990)
-            response = `${response}...`
+        const maxMessageLength = 2000; // Discord message limit
+        if (response.length <= maxMessageLength) {
+          return await assistantReply.edit({
+            content: response,
+          });
+        } else {
+          let i = 0;
+          // delete the loading spinner
+            await assistantReply.delete();
+          while (i < response.length) {
+            // send each chunk of the response as a separate message
+            const chunk = response.slice(i, i + maxMessageLength);
+            i += maxMessageLength;
+            await message.reply(chunk);
+          }
+
         }
 
-        // send the response to the user
-        return assistantReply.edit({
-            content: response,
-        })
     }
 }
