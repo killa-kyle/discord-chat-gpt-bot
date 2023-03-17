@@ -1,4 +1,5 @@
 import {Configuration, OpenAIApi} from 'openai'
+import { getPromptTokenCount } from './conversation'
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const OPEN_AI_MODEL = 'gpt-3.5-turbo'
@@ -42,7 +43,7 @@ export const getCompletion = async function (prompt, systemPromptText = '') {
 
         // combine the system prompt with the user prompt in an array
         const combinedPrompt = [systemPrompt, ...prompt]
-        console.log('combinedPrompt', combinedPrompt)
+        console.log({combinedPrompt, tokenCount: getPromptTokenCount(combinedPrompt) })
         // format the prompt
         const completion = await openai.createChatCompletion({
             model: OPEN_AI_MODEL,
@@ -66,7 +67,7 @@ export const getCompletion = async function (prompt, systemPromptText = '') {
         } else {
             console.error(`Error with OpenAI API request: ${error.message}`)
         }
-        return error
+        return error?.message || 'Error with OpenAI API request'
     }
 }
 
@@ -100,3 +101,4 @@ export const getAiImage = async prompt => {
     const responseImageUrl = response['data']['data'][0]['url']
     return responseImageUrl
 }
+

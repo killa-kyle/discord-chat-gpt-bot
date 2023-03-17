@@ -83,7 +83,7 @@ export const clearConversation = async userId => {
  * @returns Conversation[]
  * @throws an error if the conversation is not provided
  **/
-const getLatestInteractions = (conversation, interactions = 10) => {
+const getLatestInteractions = (conversation, interactions = 6) => {
     if (!conversation) {
         throw new Error('conversation is required')
     }
@@ -141,11 +141,20 @@ export const getConversationContext = (
 }
 
 const getTokenCount = text => {
+    if(!text) return 0
     let currentInput = text
     try {
-        return gptEncode(text).length
+        return gptEncode(text)?.length
     } catch (error) {
         console.log('getTokenCount error:', error, {currentInput})
         return null
     }
+}
+
+export const getPromptTokenCount = prompt => {
+    let tokenCount = 0
+    prompt.forEach(message => {
+        tokenCount = tokenCount + (getTokenCount(message.content) || 0)
+    })
+    return tokenCount
 }
