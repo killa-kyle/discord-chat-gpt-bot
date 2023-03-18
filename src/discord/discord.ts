@@ -38,12 +38,12 @@ export default class DisordBot {
 
     // listen to all messages
     async handleMessage(message, discordBotuser) {
-        const  messageAttachment = (message.attachments)
+        const messageAttachment = (message.attachments)
         if (messageAttachment) {
             const attachment = messageAttachment.first()
             const attachmentUrl = attachment?.url
         }
-      
+
 
         const isDM = message.channel instanceof DMChannel
         // ignore bot messages and messages without content
@@ -73,23 +73,56 @@ export default class DisordBot {
         let response = await getBotCompletionResponse(message, userId)
 
         // handle long responses that exceed the discord message character limit
+        // const maxMessageLength = 2000; // Discord message limit
+        // if (response.length <= maxMessageLength) {
+        //   return await assistantReply.edit({
+        //     content: response,
+        //   });
+        // } else {
+        //   let i = 0;
+        //   // delete the loading spinner
+        //     await assistantReply.delete();
+        //   while (i < response.length) {
+        //     // send each chunk of the response as a separate message
+        //     const chunk = response.slice(i, i + maxMessageLength);
+        //     i += maxMessageLength;
+        //     await message.reply(chunk);
+        //   }
+
+        // }
+
+
+        // handle long responses that exceed the discord message character limit
         const maxMessageLength = 2000; // Discord message limit
         if (response.length <= maxMessageLength) {
-          return await assistantReply.edit({
-            content: response,
-          });
+            return await assistantReply.edit({
+                content: response,
+            });
         } else {
-          let i = 0;
-          // delete the loading spinner
+            let i = 0;
+            let inCodeBlock = false;
+            // delete the loading spinner
             await assistantReply.delete();
-          while (i < response.length) {
-            // send each chunk of the response as a separate message
-            const chunk = response.slice(i, i + maxMessageLength);
-            i += maxMessageLength;
-            await message.reply(chunk);
-          }
-
+            while (i < response.length) {
+                // send each chunk of the response as a separate message
+                let chunk = response.slice(i, i + maxMessageLength);
+                if (chunk.includes('```') && inCodeBlock) {
+                    // if the chunk has an odd number of code block delimiters and we're already in a code block, add a closing delimiter to the end of the chunk
+                    chunk = chunk.slice(0, -3) + '```\n';
+                    inCodeBlock = false;
+                    i += maxMessageLength - 3; // subtract 3 from the index to avoid duplicating the closing code block delimiter
+                } else if (chunk.includes('```') && !inCodeBlock) {
+                    // if the chunk has an odd number of code block delimiters and we're not in a code block, add an opening delimiter to the beginning of the chunk
+                    chunk = '```\n' + chunk.slice(3);
+                    inCodeBlock = true;
+                    i += maxMessageLength - 3; // subtract 3 from the index to avoid duplicating the opening code block delimiter
+                } else {
+                    i += maxMessageLength;
+                }
+                await message.reply(chunk);
+            }
         }
+
 
     }
 }

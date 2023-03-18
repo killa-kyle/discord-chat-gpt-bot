@@ -105,7 +105,7 @@ const getLatestInteractions = (conversation, interactions = 6) => {
  * @param tokens
  * @returns Conversation[]
  */
-const getLatestInteractionsByTokens = async (conversation, tokens = 3097) => {
+const getLatestInteractionsByTokens = async (conversation, tokens = 7000) => {
     if (!conversation) {
         throw new Error('conversation is required')
     }
@@ -157,4 +157,20 @@ export const getPromptTokenCount = prompt => {
         tokenCount = tokenCount + (getTokenCount(message.content) || 0)
     })
     return tokenCount
+}
+
+// write a function to load the conversation from the db given the user ID and summarize the conversation
+
+
+function summarizeConversation(conversation) {
+    // loop through the conversation and get the latest n interactions between the user and the assistant
+    const conversationContext = [...conversation];
+    const context = [] as any;
+    while (conversationContext.length > 0 && context.length < 6) {
+        const message = conversationContext.pop();
+        if (message?.role === 'user' || message?.role === 'assistant') {
+            context.push(message);
+        }
+    }
+    return context.reverse();
 }

@@ -2,7 +2,7 @@ import {Configuration, OpenAIApi} from 'openai'
 import { getPromptTokenCount } from './conversation'
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
-const OPEN_AI_MODEL = 'gpt-3.5-turbo'
+const OPEN_AI_MODEL = 'gpt-4'
 
 const configuration = new Configuration({
     apiKey: OPENAI_API_KEY,
